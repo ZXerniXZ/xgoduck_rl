@@ -597,6 +597,19 @@ def _xgoduck_standup_cfg(**kwargs):
         )
         for c in _robot.collisions
     )
+    # hd1910-standup: randomizzazione tronco + pila
+    from copy import deepcopy as _deepcopy
+    _ev = cfg.events
+    _ev["randomize_com"].params["ranges"] = {0: (-0.008, 0.008), 1: (-0.004, 0.004), 2: (-0.008, 0.008)}
+    _ev["randomize_mass_inertia"].params["alpha_range"] = (-0.05, 0.05)
+    _ev["randomize_stack_mass"] = _deepcopy(_ev["randomize_mass_inertia"])
+    _ev["randomize_stack_mass"].params["asset_cfg"] = _dc.replace(
+        _ev["randomize_stack_mass"].params["asset_cfg"], body_names=("electronics_stack",))
+    _ev["randomize_stack_mass"].params["alpha_range"] = (-0.15, 0.15)
+    _ev["randomize_stack_com"] = _deepcopy(_ev["randomize_com"])
+    _ev["randomize_stack_com"].params["asset_cfg"] = _dc.replace(
+        _ev["randomize_stack_com"].params["asset_cfg"], body_names=("electronics_stack",))
+    _ev["randomize_stack_com"].params["ranges"] = (-0.005, 0.005)
     return cfg
 
 
