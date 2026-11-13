@@ -75,6 +75,22 @@ XGODUCK_WALK_HOME_FRAME.joint_pos = {
        for pattern, value in XGODUCK_HOME_FRAME.joint_pos.items()},
 }
 
+# ── Posa in piedi reale per il solo rialzo (hd1910-standup) ──────────────────
+# Anche ±26,2°, caviglie ±18°, resto uguale a HOME.
+# z calcolata con stand_z.py: suola a 1 mm dal suolo (HOME ±22° dà 0.139158).
+XGODUCK_STANDUP_STAND_Z = 0.141762
+_standup_pose = dict(XGODUCK_HOME_FRAME.joint_pos)
+_standup_pose[r".*left_hip_pitch.*"] = -math.radians(26.2)
+_standup_pose[r".*right_hip_pitch.*"] = math.radians(26.2)
+_standup_pose[r".*left_ankle.*"] = math.radians(18.0)
+_standup_pose[r".*right_ankle.*"] = -math.radians(18.0)
+XGODUCK_STANDUP_HOME_FRAME = deepcopy(XGODUCK_WALK_HOME_FRAME)
+XGODUCK_STANDUP_HOME_FRAME.pos = (0.0, 0.0, XGODUCK_STANDUP_STAND_Z)
+XGODUCK_STANDUP_HOME_FRAME.joint_pos = {
+    r"^passive_.*_backlash$": 0.0,
+    **{r"^(?!passive_)" + p.lstrip("^"): v for p, v in _standup_pose.items()},
+}
+
 
 # Named `*_collision` geoms. Bit 0 = world/floor, bit 1 = head↔base.
 # Walk: feet only. Standup: every link has a mesh and hits the floor.

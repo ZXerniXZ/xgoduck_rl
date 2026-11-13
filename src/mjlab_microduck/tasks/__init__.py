@@ -484,7 +484,8 @@ XgoduckSitStandRlCfg = replace(
 
 def _retarget_xgoduck_standup(cfg):
     """Retarget standup heights, drop+freeze reset, and HOME head commands."""
-    stand = XGODUCK_STAND_Z
+    from mjlab_microduck.robot.xgoduck_constants import XGODUCK_STANDUP_STAND_Z
+    stand = XGODUCK_STANDUP_STAND_Z
     sit = XGODUCK_SIT_Z
     dz = stand - _MICRODUCK_STANDUP_STAND_Z
     r = cfg.rewards
@@ -550,6 +551,9 @@ def _xgoduck_standup_cfg(**kwargs):
 
     cfg = make_microduck_standup_env_cfg(**kwargs)
     cfg.scene.entities = {"robot": deepcopy(XGODUCK_STANDUP_ROBOT_CFG)}
+    # Posa in piedi reale solo per il rialzo (hd1910-standup).
+    from mjlab_microduck.robot.xgoduck_constants import XGODUCK_STANDUP_HOME_FRAME
+    cfg.scene.entities["robot"].init_state = deepcopy(XGODUCK_STANDUP_HOME_FRAME)
     cfg.scene.entities["robot"].collisions = (deepcopy(XGODUCK_GETUP_COLLISION),)
     cfg = _retarget_xgoduck_standup(cfg)
     arrival = cfg.rewards["arrival_damping"].params
