@@ -554,6 +554,9 @@ def _xgoduck_standup_cfg(**kwargs):
     # Posa in piedi reale solo per il rialzo (hd1910-standup).
     from mjlab_microduck.robot.xgoduck_constants import XGODUCK_STANDUP_HOME_FRAME
     cfg.scene.entities["robot"].init_state = deepcopy(XGODUCK_STANDUP_HOME_FRAME)
+    # hd1910-standup: tensione e giroscopio
+    # MPU-6000 reale satura a ±250 °/s: stesso limite qui (il firmware deve fare lo stesso).
+    cfg.observations["actor"].terms["base_ang_vel"].clip = (-4.3633, 4.3633)
     cfg.scene.entities["robot"].collisions = (deepcopy(XGODUCK_GETUP_COLLISION),)
     cfg = _retarget_xgoduck_standup(cfg)
     arrival = cfg.rewards["arrival_damping"].params
@@ -573,7 +576,17 @@ def _xgoduck_standup_cfg(**kwargs):
         )
     from .standup_training_rewards import configure_pose_tilt_gate, configure_standup_penalty_course
     cfg = configure_pose_tilt_gate(cfg, minimum_gate=.5)
-    return configure_standup_penalty_course(cfg)
+    cfg = configure_standup_penalty_course(cfg)
+    # hd1910-standup: tensione 2S, applicata per ultima
+    import dataclasses as _dc
+    _robot = cfg.scene.entities["robot"]
+    _robot.articulation = _dc.replace(
+        _robot.articulation,
+        actuators=tuple(
+            _dc.replace(a, vin_range=(7.0, 8.4), vin_min=6.6) for a in _robot.articulation.actuators
+        ),
+    )
+    return cfg
 
 
 def _xgoduck_ground_pick_cfg(**kwargs):
