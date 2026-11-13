@@ -236,10 +236,11 @@ XGODUCK_ROULADE_ROBOT_CFG.articulation.actuators = (deepcopy(_walk_actuators),)
 # ── hd1910-standup: pila di schede sopra il tronco (solo rialzo) ─────────────
 # Arduino UNO Q + millefori con IMU + Bus Servo Adapter, avvitati sui distanziali originali.
 # Sistema del tronco: X avanti, Y sinistra, Z su. Metri e kg.
-# Misurate: dimensioni. STIMATE dal profilo della mesh: STACK_BOTTOM_Z, STACK_CENTER_X (±5 mm).
-STACK_SIZE = (0.069, 0.055, 0.035)   # lunghezza, larghezza, altezza sopra i distanziali
-STACK_BOTTOM_Z = 0.016               # cima dei distanziali
-STACK_CENTER_X = 0.016               # centro dell'Arduino
+# La pila sta sulla SCHIENA (lato -X, opposto al collo) e sporge all'indietro.
+# Dimensioni misurate; posizione dall'editor (faccia interna sulle teste dei distanziali, x = -47 mm).
+STACK_SIZE = (0.035, 0.055, 0.069)   # lungo X (sporgenza), Y (larghezza), Z (altezza)
+STACK_INNER_X = -0.036               # faccia appoggiata ai distanziali
+STACK_CENTER_Z = -0.030              # centro in altezza
 STACK_MASS = 0.055                   # spostata dal tronco: massa totale invariata
 
 
@@ -263,7 +264,7 @@ def add_electronics_stack(spec: mujoco.MjSpec) -> mujoco.MjSpec:
         trunk.fullinertia = [v * scale for v in trunk.fullinertia]
 
     L, W, H = STACK_SIZE
-    body = trunk.add_body(name="electronics_stack", pos=[STACK_CENTER_X, 0.0, STACK_BOTTOM_Z + H / 2])
+    body = trunk.add_body(name="electronics_stack", pos=[STACK_INNER_X - L / 2, 0.0, STACK_CENTER_Z])
     body.mass = STACK_MASS
     body.ipos = [0.0, 0.0, 0.0]
     body.inertia = [
