@@ -586,6 +586,17 @@ def _xgoduck_standup_cfg(**kwargs):
             _dc.replace(a, vin_range=(7.0, 8.4), vin_min=6.6) for a in _robot.articulation.actuators
         ),
     )
+    # hd1910-standup: pila di schede
+    from mjlab_microduck.robot.xgoduck_constants import get_getup_spec_with_stack
+    _robot.spec_fn = get_getup_spec_with_stack
+    _robot.collisions = tuple(
+        _dc.replace(
+            c,
+            contype={r"^stack_collision$": 3, **c.contype},
+            conaffinity={r"^stack_collision$": 2, **c.conaffinity},
+        )
+        for c in _robot.collisions
+    )
     return cfg
 
 

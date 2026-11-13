@@ -231,3 +231,55 @@ def get_roulade_spec() -> mujoco.MjSpec:
 XGODUCK_ROULADE_ROBOT_CFG = deepcopy(XGODUCK_STANDUP_ROBOT_CFG)
 XGODUCK_ROULADE_ROBOT_CFG.spec_fn = get_roulade_spec
 XGODUCK_ROULADE_ROBOT_CFG.articulation.actuators = (deepcopy(_walk_actuators),)
+
+
+# ── hd1910-standup: pila di schede sopra il tronco (solo rialzo) ─────────────
+# Arduino UNO Q + millefori con IMU + Bus Servo Adapter, avvitati sui distanziali originali.
+# Sistema del tronco: X avanti, Y sinistra, Z su. Metri e kg.
+# Misurate: dimensioni. STIMATE dal profilo della mesh: STACK_BOTTOM_Z, STACK_CENTER_X (±5 mm).
+STACK_SIZE = (0.069, 0.055, 0.035)   # lunghezza, larghezza, altezza sopra i distanziali
+STACK_BOTTOM_Z = 0.016               # cima dei distanziali
+STACK_CENTER_X = 0.016               # centro dell'Arduino
+STACK_MASS = 0.055                   # spostata dal tronco: massa totale invariata
+
+
+def _find_body(spec, name):
+    finder = getattr(spec, "body", None) or getattr(spec, "find_body")
+    body = finder(name)
+    if body is None:
+        raise RuntimeError(f"corpo {name!r} non trovato nello spec")
+    return body
+
+
+def add_electronics_stack(spec: mujoco.MjSpec) -> mujoco.MjSpec:
+    trunk = _find_body(spec, "trunk_base")
+    m_old = float(trunk.mass)
+    if m_old <= STACK_MASS:
+        raise RuntimeError(f"massa del tronco nello spec = {m_old}: serve un <inertial> esplicito")
+    scale = (m_old - STACK_MASS) / m_old
+    trunk.mass = m_old - STACK_MASS
+    trunk.inertia = [v * scale for v in trunk.inertia]
+    if any(abs(v) > 0 for v in trunk.fullinertia):
+        trunk.fullinertia = [v * scale for v in trunk.fullinertia]
+
+    L, W, H = STACK_SIZE
+    body = trunk.add_body(name="electronics_stack", pos=[STACK_CENTER_X, 0.0, STACK_BOTTOM_Z + H / 2])
+    body.mass = STACK_MASS
+    body.ipos = [0.0, 0.0, 0.0]
+    body.inertia = [
+        STACK_MASS / 12 * (W * W + H * H),
+        STACK_MASS / 12 * (L * L + H * H),
+        STACK_MASS / 12 * (L * L + W * W),
+    ]
+    if hasattr(body, "explicitinertial"):
+        body.explicitinertial = True
+    body.add_geom(name="stack_collision", type=mujoco.mjtGeom.mjGEOM_BOX,
+                  size=[L / 2, W / 2, H / 2], group=3, rgba=[0.9, 0.3, 0.1, 0.5])
+    # copia solo visiva (gruppo 2, senza collisione) per vederla nel viewer
+    body.add_geom(type=mujoco.mjtGeom.mjGEOM_BOX, size=[L / 2, W / 2, H / 2],
+                  group=2, contype=0, conaffinity=0, rgba=[0.1, 0.6, 0.2, 0.8])
+    return spec
+
+
+def get_getup_spec_with_stack() -> mujoco.MjSpec:
+    return add_electronics_stack(get_standup_spec())
