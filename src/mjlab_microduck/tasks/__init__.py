@@ -610,6 +610,26 @@ def _xgoduck_standup_cfg(**kwargs):
     _ev["randomize_stack_com"].params["asset_cfg"] = _dc.replace(
         _ev["randomize_stack_com"].params["asset_cfg"], body_names=("electronics_stack",))
     _ev["randomize_stack_com"].params["ranges"] = (-0.005, 0.005)
+    # hd1910-standup: collisione gamba <-> tronco/pila
+    # hip_roll escluso: è montato sul tronco e la sua collisione lo compenetra già da fermo
+    _LEG = r"^(left|right)_(thigh|shin)_collision$"
+    _FOOT = r"^(left|right)_foot_collision$"
+    _BODY = (r"^trunk_collision$", r"^stack_collision$")
+    def _bits(old, new):
+        # le regole nuove/aggiornate vanno PRIMA della regola generica '.*_collision'
+        return {**new, **{k: v for k, v in old.items() if k not in new}}
+    _new_ct, _new_ca = {}, {}
+    for _c in _robot.collisions:
+        _ct, _ca = dict(_c.contype), dict(_c.conaffinity)
+        _new_ct = {_LEG: _ct.get(r".*_collision", 1) | 8, _FOOT: _ct.get(_FOOT, 5) | 8}
+        _new_ca = {_LEG: 0, _FOOT: _ca.get(_FOOT, 4)}
+        for _b in _BODY:
+            _new_ct[_b] = _ct.get(_b, 3)
+            _new_ca[_b] = _ca.get(_b, 2) | 8
+    _robot.collisions = tuple(
+        _dc.replace(_c, contype=_bits(_c.contype, _new_ct), conaffinity=_bits(_c.conaffinity, _new_ca))
+        for _c in _robot.collisions
+    )
     return cfg
 
 
