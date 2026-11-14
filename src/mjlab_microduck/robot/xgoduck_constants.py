@@ -274,11 +274,18 @@ def add_electronics_stack(spec: mujoco.MjSpec) -> mujoco.MjSpec:
     ]
     if hasattr(body, "explicitinertial"):
         body.explicitinertial = True
-    body.add_geom(name="stack_collision", type=mujoco.mjtGeom.mjGEOM_BOX,
-                  size=[L / 2, W / 2, H / 2], group=3, rgba=[0.9, 0.3, 0.1, 0.5])
-    # copia solo visiva (gruppo 2, senza collisione) per vederla nel viewer
-    body.add_geom(type=mujoco.mjtGeom.mjGEOM_BOX, size=[L / 2, W / 2, H / 2],
-                  group=2, contype=0, conaffinity=0, rgba=[0.1, 0.6, 0.2, 0.8])
+    # forma dal CAD (inviluppo convesso di Assembly 1.stl), vertici nel sistema di questo corpo
+    hull = spec.add_mesh(name="backpack_hull", file="backpack_hull.stl")
+    if hasattr(hull, "maxhullvert"):
+        hull.maxhullvert = 64
+    body.add_geom(name="stack_collision", type=mujoco.mjtGeom.mjGEOM_MESH, meshname="backpack_hull",
+                  group=3, density=0, rgba=[1.0, 0.55, 0.1, 0.9])
+    # copia solo visiva (gruppo 2, senza collisione): il CAD completo, con i connettori
+    vis = spec.add_mesh(name="backpack_visual", file="backpack_visual.stl")
+    if hasattr(mujoco, "mjtMeshInertia"):
+        vis.inertia = mujoco.mjtMeshInertia.mjMESH_INERTIA_SHELL
+    body.add_geom(type=mujoco.mjtGeom.mjGEOM_MESH, meshname="backpack_visual",
+                  group=2, contype=0, conaffinity=0, density=0, rgba=[0.25, 0.25, 0.28, 1.0])
     return spec
 
 
