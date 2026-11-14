@@ -238,7 +238,7 @@ XGODUCK_ROULADE_ROBOT_CFG.articulation.actuators = (deepcopy(_walk_actuators),)
 # Sistema del tronco: X avanti, Y sinistra, Z su. Metri e kg.
 # La pila sta sulla SCHIENA (lato -X, opposto al collo) e sporge all'indietro.
 # Dimensioni misurate; posizione dall'editor (faccia interna sulle teste dei distanziali, x = -47 mm).
-STACK_SIZE = (0.035, 0.055, 0.069)   # lungo X (sporgenza), Y (larghezza), Z (altezza)
+STACK_SIZE = (0.0270, 0.0533, 0.0691)  # da CAD: X sporgenza, Y larghezza, Z altezza
 STACK_INNER_X = -0.036               # faccia appoggiata ai distanziali
 STACK_CENTER_Z = -0.030              # centro in altezza
 STACK_MASS = 0.055                   # spostata dal tronco: massa totale invariata
